@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DocuWrite</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{--p:#1a73e8;--b:#dadce0;--bg:#f1f3f4;--t:#202124;--card:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#1f1f1f;--b:#444;--t:#e8eaed;--card:#2b2b2b}}
+*{box-sizing:border-box}body{margin:0;font:14px Arial,sans-serif;color:var(--t);background:var(--bg)}
+button,select,input{font:inherit;color:var(--t)}.hide{display:none!important}
+button{background:none;border:0;border-radius:4px;padding:5px 8px;cursor:pointer}button:hover{background:rgba(128,128,128,.2)}
+.btn{background:var(--p);color:#fff;padding:9px 16px;border-radius:20px}.btn:hover{background:#1557b0}
+input,select{background:var(--card);border:1px solid var(--b);border-radius:4px;padding:6px 8px}
+header{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--card);border-bottom:1px solid var(--b)}
+.logo{font-weight:bold;font-size:20px;color:var(--p)}.sp{flex:1}
+#auth{max-width:340px;margin:80px auto;background:var(--card);padding:28px;border-radius:12px;display:flex;flex-direction:column;gap:12px;border:1px solid var(--b)}
+.wrap{max-width:1000px;margin:20px auto;padding:0 16px}h3{margin:20px 0 10px}
+.grid{display:flex;flex-wrap:wrap;gap:14px}
+.card{width:150px;height:190px;background:var(--card);border:1px solid var(--b);border-radius:6px;padding:10px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;font-size:12px}
+.card:hover{border-color:var(--p)}.card b{font-size:13px;word-break:break-word}
+#bar{background:var(--card);border-bottom:1px solid var(--b)}
+#top{display:flex;align-items:center;gap:8px;padding:6px 12px}#title{border:1px solid transparent;font-size:18px;width:260px}#title:hover{border-color:var(--b)}
+#menus{display:flex;gap:2px;position:relative}.mi{position:relative}
+.dd{position:absolute;top:100%;left:0;background:var(--card);border:1px solid var(--b);box-shadow:0 4px 12px #0003;min-width:190px;z-index:20;border-radius:6px;padding:4px 0}
+.dd button{display:block;width:100%;text-align:left;border-radius:0;padding:7px 14px}
+#tools{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:4px 12px;border-top:1px solid var(--b)}
+#tools select{width:auto}.sep{width:1px;height:22px;background:var(--b);margin:0 4px}
+.clr{position:relative;display:inline-flex;align-items:center;padding:4px 6px;cursor:pointer;border-radius:4px}.clr:hover{background:rgba(128,128,128,.2)}
+.clr input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0}
+.clr i{position:absolute;left:5px;right:5px;bottom:1px;height:3px;background:#000}
+#scroll{height:calc(100vh - 150px);overflow:auto;padding:24px 0}
+#page{width:794px;max-width:96%;min-height:1050px;margin:0 auto;background:#fff;color:#000;padding:72px 80px;box-shadow:0 1px 4px #0004;outline:0;font:16px/1.5 Arial,sans-serif;transform-origin:top center}
+#page table{border-collapse:collapse}#page td{border:1px solid #999;padding:6px;min-width:60px}#page img{max-width:100%}
+#status{padding:4px 16px;font-size:12px;background:var(--card);border-top:1px solid var(--b)}
+#ai{position:fixed;right:16px;top:150px;width:300px;background:var(--card);border:1px solid var(--b);border-radius:8px;padding:12px;z-index:30;box-shadow:0 4px 16px #0004;display:flex;flex-direction:column;gap:8px}
+#ai textarea{height:120px;background:var(--card);color:var(--t);border:1px solid var(--b);border-radius:4px;padding:6px}
+#pdfpages canvas{display:block;margin:12px auto;box-shadow:0 1px 4px #0004;max-width:96%}
+@media print{body *{visibility:hidden}#page,#page *{visibility:visible}#page{position:absolute;left:0;top:0;box-shadow:none;width:100%}}
+</style></head><body>
+
+<div id="auth" class="hide">
+ <div class="logo">📄 DocuWrite</div>
+ <div id="authTitle">Sign in</div>
+ <input id="aName" placeholder="Name" class="hide"><input id="aEmail" type="email" placeholder="Email"><input id="aPass" type="password" placeholder="Password">
+ <button class="btn" id="aGo">Sign in</button>
+ <button id="aSwitch">Create an account</button><button id="aGuest">Continue as guest</button>
+ <small id="aErr" style="color:#d93025"></small>
+</div>
+
+<div id="home" class="hide">
+ <header><span class="logo">📄 DocuWrite</span><input id="search" placeholder="Search documents" style="width:260px"><span class="sp"></span>
+  <button id="openPdf">📕 Open PDF</button><span id="who"></span><button id="out">Sign out</button></header>
+ <div class="wrap"><h3>Start a new document</h3><div class="grid" id="tpls"></div>
+ <h3>Your documents</h3><div class="grid" id="docs"></div></div>
+</div>
+
+<div id="editor" class="hide">
+ <div id="bar">
+  <div id="top"><button id="back" title="Home">📄</button><input id="title" value="Untitled document"><div id="menus"></div><span class="sp"></span><span id="saved" style="font-size:12px"></span><button id="aiBtn">✨ AI</button></div>
+  <div id="tools">
+   <button data-c="undo" title="Undo">↶</button><button data-c="redo" title="Redo">↷</button><button onclick="print()" title="Print">🖨</button><span class="sep"></span>
+   <select id="blk"><option value="p">Normal</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option><option value="pre">Code</option></select>
+   <select id="font"><option>Arial</option><option>Times New Roman</option><option>Georgia</option><option>Verdana</option><option>Courier New</option><option>Trebuchet MS</option><option>Comic Sans MS</option></select>
+   <select id="size"><option>10</option><option>12</option><option>14</option><option selected>16</option><option>18</option><option>24</option><option>32</option><option>48</option></select><span class="sep"></span>
+   <button data-c="bold"><b>B</b></button><button data-c="italic"><i>I</i></button><button data-c="underline"><u>U</u></button><button data-c="strikeThrough"><s>S</s></button>
+   <label class="clr" title="Text colour">A<i id="fi"></i><input type="color" id="fc" value="#000000"></label>
+   <label class="clr" title="Highlight colour">🖍<i id="hi" style="background:#ffff00"></i><input type="color" id="hc" value="#ffff00"></label><span class="sep"></span>
+   <button data-c="justifyLeft">⬅</button><button data-c="justifyCenter">↔</button><button data-c="justifyRight">➡</button><button data-c="justifyFull">☰</button><span class="sep"></span>
+   <button data-c="insertUnorderedList">• List</button><button data-c="insertOrderedList">1. List</button><button data-c="outdent">⇤</button><button data-c="indent">⇥</button><span class="sep"></span>
+   <button data-c="superscript">x²</button><button data-c="subscript">x₂</button><button id="lnk">🔗</button><button id="img">🖼</button><button id="tbl">▦</button><button data-c="removeFormat" title="Clear formatting">Tx</button>
+  </div>
+ </div>
+ <div id="scroll"><div id="page" contenteditable="true" spellcheck="true"></div></div>
+ <div id="status"></div>
+ <div id="ai" class="hide"><b>✨ AI assistant (Groq)</b>
+  <textarea id="aiP" placeholder="Select text, then type an instruction (or use a button)…"></textarea>
+  <div><button data-ai="Improve the writing of this text.">Improve</button><button data-ai="Fix spelling and grammar.">Fix grammar</button><button data-ai="Summarize this text.">Summarize</button><button data-ai="Continue writing this text.">Continue</button></div>
+  <button class="btn" id="aiGo">Run</button><div id="aiOut" style="white-space:pre-wrap;max-height:160px;overflow:auto"></div><button id="aiIns" class="hide">Insert result</button></div>
+</div>
+
+<div id="pdf" class="hide">
+ <header><button id="pdfBack">← Home</button><b id="pdfName"></b><span class="sp"></span><button id="zo">−</button><span id="zl">100%</span><button id="zi">+</button></header>
+ <div id="pdfpages" style="height:calc(100vh - 54px);overflow:auto"></div>
+</div>
+<input type="file" id="pdfIn" accept="application/pdf" class="hide"><input type="file" id="imgIn" accept="image/*" class="hide">
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const LS=(k,v)=>v===undefined?JSON.parse(localStorage.getItem(k)||'null'):localStorage.setItem(k,JSON.stringify(v));
+const sha=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+let user=LS('dw_session'),cur=null,range=null,mode='in',zoom=1,pdfDoc=null,pdfScale=1.2,aiText='';
+const page=$('#page'),show=v=>['auth','home','editor','pdf'].forEach(x=>$('#'+x).classList.toggle('hide',x!=v));
+const key=()=>'dw_docs_'+user.email,docs=()=>LS(key())||[];
+
+/* ---------- Auth (browser-local demo; swap for Netlify Identity/Supabase for real accounts) ---------- */
+$('#aSwitch').onclick=()=>{mode=mode=='in'?'up':'in';$('#aName').classList.toggle('hide',mode=='in');$('#authTitle').textContent=$('#aGo').textContent=mode=='in'?'Sign in':'Sign up';$('#aSwitch').textContent=mode=='in'?'Create an account':'I have an account'};
+$('#aGo').onclick=async()=>{const e=$('#aEmail').value.trim().toLowerCase(),p=$('#aPass').value,u=LS('dw_users')||{};
+ if(!e||p.length<4)return $('#aErr').textContent='Enter an email and a password (4+ characters).';
+ const h=await sha(p);
+ if(mode=='up'){if(u[e])return $('#aErr').textContent='Account exists.';u[e]={name:$('#aName').value||e,h};LS('dw_users',u)}
+ else if(!u[e]||u[e].h!=h)return $('#aErr').textContent='Wrong email or password.';
+ login({email:e,name:u[e].name})};
+$('#aGuest').onclick=()=>login({email:'guest',name:'Guest'});
+function login(u){user=u;LS('dw_session',u);home()}
+$('#out').onclick=()=>{localStorage.removeItem('dw_session');user=null;show('auth')};
+
+/* ---------- Templates & Home ---------- */
+const T={Blank:'<p><br></p>',
+Resume:'<h1>Your Name</h1><p>email@example.com · +00 000 000 0000 · City</p><hr><h2>Summary</h2><p>Short professional summary.</p><h2>Experience</h2><p><b>Job Title</b> — Company <i>(2022–Present)</i></p><ul><li>Achievement</li><li>Achievement</li></ul><h2>Education</h2><p><b>Degree</b> — University</p><h2>Skills</h2><p>Skill, Skill, Skill</p>',
+Letter:'<p>Your Name<br>Your Address</p><p>Date</p><p>Recipient Name<br>Recipient Address</p><p>Dear Sir/Madam,</p><p>Write your letter here.</p><p>Sincerely,<br>Your Name</p>',
+'Meeting notes':'<h1>Meeting Notes</h1><p><b>Date:</b> &nbsp; <b>Attendees:</b></p><h2>Agenda</h2><ol><li>Item</li></ol><h2>Discussion</h2><p><br></p><h2>Action items</h2><ul><li>Owner — task — due date</li></ul>',
+'Project proposal':'<h1>Project Proposal</h1><h2>Overview</h2><p>What and why.</p><h2>Goals</h2><ul><li>Goal</li></ul><h2>Timeline</h2><table><tr><td>Phase</td><td>Dates</td><td>Owner</td></tr><tr><td> </td><td> </td><td> </td></tr></table><h2>Budget</h2><p><br></p>',
+Invoice:'<h1>INVOICE</h1><p>Invoice #: &nbsp; Date:</p><p>Bill to:</p><table><tr><td>Description</td><td>Qty</td><td>Price</td><td>Total</td></tr><tr><td> </td><td> </td><td> </td><td> </td></tr></table><p><b>Total due:</b></p>'};
+function home(){show('home');$('#who').textContent=user.name;
+ $('#tpls').innerHTML=Object.keys(T).map(k=>`<div class="card" data-t="${k}"><b>${k}</b><span>Template</span></div>`).join('');
+ $$('#tpls .card').forEach(c=>c.onclick=()=>newDoc(c.dataset.t));renderDocs()}
+function renderDocs(){const q=$('#search').value.toLowerCase();
+ $('#docs').innerHTML=docs().filter(d=>d.title.toLowerCase().includes(q)).sort((a,b)=>b.updated-a.updated).map(d=>`<div class="card" data-id="${d.id}"><b>${d.title.replace(/</g,'&lt;')}</b><span>${new Date(d.updated).toLocaleString()} <button data-del="${d.id}">🗑</button></span></div>`).join('')||'<span>No documents yet.</span>';
+ $$('#docs .card').forEach(c=>c.onclick=e=>{if(e.target.dataset.del){if(confirm('Delete this document?')){LS(key(),docs().filter(d=>d.id!=e.target.dataset.del));renderDocs()}return}openDoc(c.dataset.id)})}
+$('#search').oninput=renderDocs;
+function newDoc(t='Blank'){cur={id:Date.now()+'',title:t=='Blank'?'Untitled document':t,html:T[t],updated:Date.now()};LS(key(),[...docs(),cur]);openDoc(cur.id)}
+function openDoc(id){cur=docs().find(d=>d.id==id);$('#title').value=cur.title;page.innerHTML=cur.html;show('editor');count();page.focus()}
+function save(){if(!cur)return;cur.title=$('#title').value||'Untitled';cur.html=page.innerHTML;cur.updated=Date.now();LS(key(),docs().map(d=>d.id==cur.id?cur:d));$('#saved').textContent='Saved ✓'}
+let st;page.oninput=$('#title').oninput=()=>{$('#saved').textContent='Saving…';clearTimeout(st);st=setTimeout(save,600);count()};
+$('#back').onclick=()=>{save();home()};
+function count(){const t=page.innerText.trim();$('#status').textContent=(t?t.split(/\s+/).length:0)+' words · '+t.length+' characters'}
+
+/* ---------- Editing ---------- */
+document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&page.contains(s.anchorNode))range=s.getRangeAt(0).cloneRange()});
+function restore(){page.focus();if(range){const s=getSelection();s.removeAllRanges();s.addRange(range)}}
+function cmd(c,v){restore();document.execCommand('styleWithCSS',false,true);document.execCommand(c,false,v);page.oninput()}
+$$('[data-c]').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>cmd(b.dataset.c)});
+$('#blk').onchange=e=>cmd('formatBlock',e.target.value);
+$('#font').onchange=e=>cmd('fontName',e.target.value);
+$('#size').onchange=e=>{cmd('fontSize',7);$$('#page font[size="7"]').forEach(f=>{f.removeAttribute('size');f.style.fontSize=e.target.value+'px'});page.oninput()};
+$('#fc').oninput=e=>{$('#fi').style.background=e.target.value;cmd('foreColor',e.target.value)};
+$('#hc').oninput=e=>{$('#hi').style.background=e.target.value;cmd('hiliteColor',e.target.value)};
+$('#lnk').onclick=()=>{const u=prompt('Link URL');if(u)cmd('createLink',u)};
+$('#img').onclick=()=>$('#imgIn').click();
+$('#imgIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>cmd('insertImage',r.result);r.readAsDataURL(f);e.target.value=''};
+$('#tbl').onclick=table;
+function table(){const r=+prompt('Rows',3),c=+prompt('Columns',3);if(!r||!c)return;cmd('insertHTML','<table>'+('<tr>'+'<td> </td>'.repeat(c)+'</tr>').repeat(r)+'</table><p><br></p>')}
+function findRep(){const f=prompt('Find');if(!f)return;const r=prompt('Replace with');if(r===null)return;const w=document.createTreeWalker(page,NodeFilter.SHOW_TEXT);let n,k=0;while(n=w.nextNode()){if(n.nodeValue.includes(f)){k+=n.nodeValue.split(f).length-1;n.nodeValue=n.nodeValue.split(f).join(r)}}alert(k+' replaced');page.oninput()}
+const dl=(ext,type,body)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([body],{type}));a.download=($('#title').value||'document')+'.'+ext;a.click()};
+const wrapHTML=()=>`<html><head><meta charset="utf-8"><title>${$('#title').value}</title></head><body>${page.innerHTML}</body></html>`;
+
+/* ---------- Menus ---------- */
+const sp=(l,f)=>[l,f],M={
+File:[sp('New document',()=>{save();newDoc()}),sp('Open PDF…',()=>$('#pdfIn').click()),sp('Download Word (.doc)',()=>dl('doc','application/msword',wrapHTML())),sp('Download HTML',()=>dl('html','text/html',wrapHTML())),sp('Download text',()=>dl('txt','text/plain',page.innerText)),sp('Print / Save as PDF',()=>print()),sp('Back to home',()=>{save();home()})],
+Edit:[sp('Undo',()=>cmd('undo')),sp('Redo',()=>cmd('redo')),sp('Cut',()=>cmd('cut')),sp('Copy',()=>cmd('copy')),sp('Select all',()=>cmd('selectAll')),sp('Find & replace',findRep)],
+Insert:[sp('Image',()=>$('#imgIn').click()),sp('Table',table),sp('Link',()=>$('#lnk').click()),sp('Horizontal line',()=>cmd('insertHorizontalRule')),sp('Checklist',()=>cmd('insertHTML','<ul style="list-style:none"><li>☐ </li></ul>')),sp('Date',()=>cmd('insertText',new Date().toLocaleDateString())),sp('Page break',()=>cmd('insertHTML','<div style="page-break-after:always;border-top:1px dashed #999"></div><p><br></p>'))],
+Format:[sp('Bold',()=>cmd('bold')),sp('Italic',()=>cmd('italic')),sp('Underline',()=>cmd('underline')),sp('Strikethrough',()=>cmd('strikeThrough')),sp('Superscript',()=>cmd('superscript')),sp('Subscript',()=>cmd('subscript')),sp('Line spacing 1.0',()=>page.style.lineHeight=1),sp('Line spacing 1.5',()=>page.style.lineHeight=1.5),sp('Line spacing 2.0',()=>page.style.lineHeight=2),sp('Clear formatting',()=>cmd('removeFormat'))],
+View:[sp('Zoom in',()=>{zoom=Math.min(2,zoom+.1);page.style.zoom=zoom}),sp('Zoom out',()=>{zoom=Math.max(.5,zoom-.1);page.style.zoom=zoom})],
+Tools:[sp('AI assistant',()=>$('#ai').classList.toggle('hide')),sp('Word count',()=>alert($('#status').textContent))]};
+$('#menus').innerHTML=Object.keys(M).map(k=>`<div class="mi"><button>${k}</button><div class="dd hide">${M[k].map((m,i)=>`<button data-k="${k}" data-i="${i}">${m[0]}</button>`).join('')}</div></div>`).join('');
+$$('.mi>button').forEach(b=>b.onclick=e=>{e.stopPropagation();const d=b.nextElementSibling,o=d.classList.contains('hide');$$('.dd').forEach(x=>x.classList.add('hide'));d.classList.toggle('hide',!o)});
+$$('.dd button').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>M[b.dataset.k][b.dataset.i][1]()});
+document.onclick=()=>$$('.dd').forEach(x=>x.classList.add('hide'));
+page.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key=='s'){e.preventDefault();save()}});
+
+/* ---------- AI (Groq via Netlify function; key stays server-side) ---------- */
+$('#aiBtn').onclick=()=>$('#ai').classList.toggle('hide');
+$$('[data-ai]').forEach(b=>b.onclick=()=>{$('#aiP').value=b.dataset.ai;$('#aiGo').click()});
+$('#aiGo').onclick=async()=>{const sel=range&&range.toString()||page.innerText;$('#aiOut').textContent='Thinking…';$('#aiIns').classList.add('hide');
+ try{const r=await fetch('/.netlify/functions/ai',{method:'POST',body:JSON.stringify({prompt:$('#aiP').value||'Improve this text.',text:sel})});aiText=(await r.json()).text;$('#aiOut').textContent=aiText;$('#aiIns').classList.remove('hide')}
+ catch(e){$('#aiOut').textContent='AI unavailable (deploy to Netlify and set GROQ_API_KEY).'}};
+$('#aiIns').onclick=()=>cmd('insertText',aiText);
+
+/* ---------- PDF viewer ---------- */
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+$('#openPdf').onclick=()=>$('#pdfIn').click();
+$('#pdfIn').onchange=async e=>{const f=e.target.files[0];if(!f)return;$('#pdfName').textContent=f.name;show('pdf');pdfDoc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;renderPdf();e.target.value=''};
+async function renderPdf(){const box=$('#pdfpages');box.innerHTML='';$('#zl').textContent=Math.round(pdfScale/1.2*100)+'%';
+ for(let i=1;i<=pdfDoc.numPages;i++){const p=await pdfDoc.getPage(i),v=p.getViewport({scale:pdfScale}),c=document.createElement('canvas');c.width=v.width;c.height=v.height;box.appendChild(c);await p.render({canvasContext:c.getContext('2d'),viewport:v}).promise}}
+$('#zi').onclick=()=>{pdfScale=Math.min(3,pdfScale+.2);renderPdf()};$('#zo').onclick=()=>{pdfScale=Math.max(.6,pdfScale-.2);renderPdf()};
+$('#pdfBack').onclick=home;
+
+user?home():show('auth');
+</script></body></html>
